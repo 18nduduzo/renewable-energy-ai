@@ -1,49 +1,62 @@
----
-title: Solar & Electrical Design AI
-emoji: ⚡
-colorFrom: yellow
-colorTo: green
-sdk: streamlit
-app_file: app.py
-pinned: false
----
-
 # ⚡ Solar & Electrical Design AI
 
 AI chat assistant plus engineering calculators for solar PV, batteries, inverters,
 cables, power factor correction and ROI. Built for Eswatini and Southern Africa.
 
-(The block at the top of this file is required by Hugging Face Spaces. Keep it.)
+## Features
+
+- ChatGPT-style chats: new chat, chat list, regenerate, continue (when a reply is cut off), export to Markdown
+- Several AI providers: Groq, Google Gemini, xAI Grok, OpenAI. A provider shows up once you add its key.
+  If the chosen one fails or hits a limit, the others are tried automatically.
+- Calculators: solar + inverter, battery, cable (voltage drop), power factor, ROI
+- Proper maths rendering for equations
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| `app.py` | Streamlit interface and AI chat |
-| `calculators.py` | Engineering formulas (no UI, easy to test) |
-| `requirements.txt` | Python dependencies |
+| `app.py` | Streamlit interface |
+| `providers.py` | AI providers, failover, history trimming |
+| `chatstore.py` | Saving conversations (memory or SQLite) |
+| `calculators.py` | Engineering formulas |
+| `mathfmt.py` | Fixes equation formatting from the AI |
+| `test_core.py` | Tests (`python test_core.py`) |
+| `secrets.example.toml` | Template for your keys |
 
 ## Run locally
 
 ```bash
 pip install -r requirements.txt
-export GROQ_API_KEY=gsk_your_key      # Windows PowerShell: $env:GROQ_API_KEY="gsk_your_key"
+cp secrets.example.toml .streamlit/secrets.toml     # then edit it and add a key
 streamlit run app.py
 ```
 
-## Deploy on Hugging Face Spaces (free)
+## Deploy (free): Streamlit Community Cloud
 
-1. Create a Space: SDK **Streamlit**, visibility Public.
-2. Upload `app.py`, `calculators.py`, `requirements.txt`, `README.md`.
-3. Settings → **Variables and secrets** → add secret `GROQ_API_KEY`.
-4. Optional secrets:
-   - `MODEL` (default `openai/gpt-oss-120b`). Change this when Groq retires a model.
-   - `FALLBACK_MODEL` (default `openai/gpt-oss-20b`).
-   - `APP_PASSWORD`. Set this to stop strangers using up your free API quota.
+Hugging Face no longer offers Streamlit as a free SDK. Use https://share.streamlit.io:
+connect GitHub, pick this repo, main file `app.py`, and paste your secrets under Advanced settings.
 
-## Never commit your API key
+## Which providers are free?
 
-Do not put the key in code or in GitHub. Use Secrets only. If a key leaks, delete it in the Groq console and create a new one.
+(Based on third-party summaries in Nov 2026. Check each vendor's current terms.)
+
+- **Groq**: free tier for testing. Use a paid plan for real customers.
+- **Gemini**: free tier on Flash models with small daily limits. Google may use free-tier prompts to improve its products, so do not send confidential client data.
+- **xAI Grok** and **OpenAI**: pay-as-you-go. No free API credits for new accounts.
+
+Model names change often. Override them with secrets (see `secrets.example.toml`).
+
+## Saved chats: read before turning on
+
+By default chats live only in the visitor's browser session and disappear on refresh.
+`PERSIST_CHATS=true` saves them to a local file (`chats.db`). On free hosts that file is temporary
+and **shared by every visitor**, so only enable it on your own computer, or after adding user login
+(then pass each user's id as `OWNER` in `app.py` so people only see their own chats).
+
+## Never commit your API keys
+
+Keys belong in `.streamlit/secrets.toml` or your host's Secrets page, never in code or GitHub.
+If a key leaks, delete it in the provider's console and create a new one.
 
 ## Disclaimer
 
