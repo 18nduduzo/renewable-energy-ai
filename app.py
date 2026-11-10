@@ -4,6 +4,7 @@ import streamlit as st
 from groq import Groq
 
 import calculators as calc
+from mathfmt import normalize_math
 
 st.set_page_config(page_title="Solar & Electrical Design AI", page_icon="⚡", layout="wide")
 
@@ -41,6 +42,17 @@ How to answer:
 - Reference standards where relevant (IEC 62109, IEC 61215, IEC 60364, SANS 10142-1) and
   remind the user to confirm local utility (EEC) and regulatory requirements.
 - Prefer clear steps and small tables. Be concise, practical and honest about uncertainty.
+
+Maths formatting (the app renders KaTeX; follow this exactly):
+- Inline maths: wrap in single dollar signs, e.g. $I_{dc} = P/V$.
+- Standalone equations: put on their own line wrapped in double dollar signs, e.g.
+  $$P_{cond} = I_{rms}^{2}\\,R_{ds(on)}$$
+- NEVER use [ ... ], ( ... ), \\[ ... \\] or \\( ... \\) to wrap maths.
+- Write units with \\text{}, with a thin space before them: $5\\,\\text{kW}$, $0.95\\,\\text{A}$,
+  $350\\,\\text{V}$, $30\\,\\text{m}\\Omega$. Use \\times, \\approx, \\frac{a}{b}, \\sqrt{x}, \\cdot.
+- Use subscripts for symbols ($V_{oc}$, $I_{sc}$, $R_{ds(on)}$), never plain "Voc".
+- Put numbers into the formula on one line, then give the result on the next line.
+- In tables, wrap each maths cell in $...$. Do not use a literal $ for currency; write "SZL".
 - For anything involving mains voltage, DC arrays or batteries, include the key safety points
   (isolation, DC-rated protection, correct fusing, qualified person sign-off).
 - If key inputs are missing, ask for them or state sensible defaults.
@@ -72,7 +84,11 @@ client = Groq(api_key=API_KEY)
 # Chat helpers
 # --------------------------------------------------------------------------
 def stream_answer(history):
-    """Yield text chunks; fall back to a second model if the first fails."""
+    """Yield text chunks; fall back to a second model if the first fails.
+
+    The system prompt above is a normal (non-raw) string, so the doubled
+    backslashes in its maths examples reach the model as single backslashes.
+    """
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history[-12:]
     last_error = None
     for model in (MODEL, FALLBACK_MODEL):
@@ -135,7 +151,7 @@ with tab_chat:
 
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
-            st.markdown(m["content"])
+            st.markdown(normalize_math(m["content"]))
 
     typed = st.chat_input("Ask about solar, batteries, inverters, cables, transformers...")
     prompt = st.session_state.pop("pending_prompt", None) or typed
@@ -144,7 +160,12 @@ with tab_chat:
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
-            answer = st.write_stream(stream_answer(st.session_state.messages))
+            box = st.empty()
+            answer = ""
+            for piece in stream_answer(st.session_state.messages):
+                answer += piece
+                box.markdown(normalize_math(answer) + " ▌")
+            box.markdown(normalize_math(answer))
         st.session_state.messages.append({"role": "assistant", "content": answer})
 
 # ----------------------------------------------------------- solar + inverter
