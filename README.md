@@ -10,6 +10,7 @@ cables, power factor correction and ROI. Built for Eswatini and Southern Africa.
   If the chosen one fails or hits a limit, the others are tried automatically.
 - Calculators: solar + inverter, battery, cable (voltage drop), power factor, ROI
 - Proper maths rendering for equations
+- **Drawings (paid PDFs):** single line diagram, array layout, rails and mounting detail for pitched roofs, flat roofs and ground mounts, plus bill of materials and cable/protection schedules
 
 ## Files
 
@@ -20,6 +21,13 @@ cables, power factor correction and ROI. Built for Eswatini and Southern Africa.
 | `chatstore.py` | Saving conversations (memory or SQLite) |
 | `calculators.py` | Engineering formulas |
 | `mathfmt.py` | Fixes equation formatting from the AI |
+| `design.py` | String sizing, protection, cables, bill of materials |
+| `layout.py` | Module layout, rails, clamps, posts, row spacing |
+| `scene.py` | Drawing model that renders to SVG (preview) and PDF |
+| `drawings.py` | The five A3 drawing sheets |
+| `drawings_ui.py` | The Drawings screen |
+| `paywall.py`, `make_codes.py` | Signed unlock codes for paid downloads |
+| `test_drawings.py` | Tests for the drawing features |
 | `test_core.py` | Tests (`python test_core.py`) |
 | `secrets.example.toml` | Template for your keys |
 
@@ -35,6 +43,29 @@ streamlit run app.py
 
 Hugging Face no longer offers Streamlit as a free SDK. Use https://share.streamlit.io:
 connect GitHub, pick this repo, main file `app.py`, and paste your secrets under Advanced settings.
+
+## Selling the drawing PDFs
+
+Everyone sees the design numbers and watermarked previews. The clean PDFs need an unlock code.
+
+1. Choose a long random `UNLOCK_SECRET` and add it to the app's Secrets (and keep a copy somewhere safe).
+2. A customer pays you (bank transfer / mobile money). Then you make a code on your own computer:
+
+```bash
+export UNLOCK_SECRET="the-same-secret"
+python make_codes.py PACK ACME 30      # complete pack, valid 30 days
+python make_codes.py SLD  JOHNS 7      # single line diagram only, valid 7 days
+```
+
+3. Send them the code. They paste it into the Drawings view and the PDF buttons appear.
+
+Codes are stateless: they can be shared until they expire, and cannot count downloads. Use short expiries,
+and add a customer id to `REVOKED_CODES` to cut one off. For automatic card payments and per-download credits you
+will later need a database and a payment provider that pays out to Eswatini (Stripe does not).
+
+**The drawings are preliminary.** They are generated from your inputs, are not stamped, and must be checked and signed
+off by a registered engineer or competent electrician. Wind, snow, foundations and ballast are not calculated.
+Have a lawyer review your terms of sale before you charge.
 
 ## Which providers are free?
 

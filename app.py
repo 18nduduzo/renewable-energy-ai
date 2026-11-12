@@ -3,6 +3,7 @@ import os
 import streamlit as st
 
 import calculators as calc
+import drawings_ui
 from chatstore import MemoryStore, SqliteStore
 from mathfmt import normalize_math
 from providers import ChatStream, enabled_providers, trim_history
@@ -103,6 +104,7 @@ st.session_state.setdefault("chat_id", None)
 CONTINUE_PROMPT = "Please continue exactly where you stopped. Do not repeat what you already wrote."
 CHAT_PAGE = "💬 Chat"
 CALC_PAGE = "🧮 Calculators"
+DRAW_PAGE = "📐 Drawings"
 
 
 def queue_prompt(text: str):
@@ -161,8 +163,10 @@ st.title("⚡ Solar & Electrical Design AI")
 st.caption("For installers, consultants and students in Eswatini & Southern Africa")
 
 page = st.radio(
-    "View", [CHAT_PAGE, CALC_PAGE], horizontal=True, label_visibility="collapsed", key="page"
+    "View", [CHAT_PAGE, CALC_PAGE, DRAW_PAGE], horizontal=True, label_visibility="collapsed", key="page"
 )
+if page != DRAW_PAGE:
+    drawings_ui.keep_state()  # keep drawing inputs while the user visits other views
 
 # ------------------------------------------------------------------ chat tab
 if page == CHAT_PAGE:  # page level (not in a tab) so the input stays pinned to the bottom
@@ -414,3 +418,6 @@ if page == CALC_PAGE:
             st.caption("Undiscounted. Excludes battery/inverter replacement, financing and net-metering rules.")
         except ValueError as e:
             st.warning(str(e))
+
+if page == DRAW_PAGE:
+    drawings_ui.render(get_secret)
